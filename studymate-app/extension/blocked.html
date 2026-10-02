@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Stay focused</title>
+<style>
+  :root{color-scheme:light dark}
+  body{margin:0;min-height:100vh;display:grid;place-items:center;font-family:system-ui,-apple-system,'Segoe UI',sans-serif;background:#14213D;color:#F2F5FB;text-align:center;padding:24px}
+  .mark{display:inline-block;background:#FFD23F;color:#14213D;font-weight:800;padding:2px 12px;border-radius:5px;transform:rotate(-1.5deg);margin-bottom:18px}
+  h1{margin:0 0 8px;font-size:clamp(2rem,6vw,3.2rem)}
+  p{margin:6px 0;opacity:.85}
+  #left{font-size:clamp(3rem,12vw,6rem);font-weight:800;font-variant-numeric:tabular-nums;margin:18px 0}
+</style>
+</head>
+<body>
+  <main>
+    <span class="mark">StudyMate</span>
+    <h1>This site is blocked right now.</h1>
+    <p>Your focus session ends in</p>
+    <div id="left" role="timer">--:--</div>
+    <p>To stop early, end the session in the StudyMate app.</p>
+  </main>
+  <script src="blocked.js"></script>
+</body>
+</html>

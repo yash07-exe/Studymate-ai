@@ -1,0 +1,963 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="studymate-app" content="1">
+<title>StudyMate AI</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Figtree:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#F2F5FB;--surface:#FFFFFF;--ink:#14213D;--ink-2:#4B5876;--line:#D5DCEB;--grid:rgba(20,33,61,.05);
+  --accent:#2C50D0;--on-accent:#FFFFFF;--hi:#FFD23F;--on-hi:#14213D;
+  --good:#1E8E5A;--warn:#D98A1B;--bad:#C93A52;--soft:#E9EEFB;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#0D1426;--surface:#152039;--ink:#E9EEFF;--ink-2:#9CAAC9;--line:#26355A;--grid:rgba(160,185,255,.055);
+    --accent:#84A0FF;--on-accent:#0D1426;--hi:#FFD23F;--on-hi:#14213D;
+    --good:#4CD08F;--warn:#F0A63A;--bad:#FF7A90;--soft:#1B2A4D;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#0D1426;--surface:#152039;--ink:#E9EEFF;--ink-2:#9CAAC9;--line:#26355A;--grid:rgba(160,185,255,.055);
+  --accent:#84A0FF;--on-accent:#0D1426;--hi:#FFD23F;--on-hi:#14213D;
+  --good:#4CD08F;--warn:#F0A63A;--bad:#FF7A90;--soft:#1B2A4D;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;font-family:'Figtree',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;font-size:15.5px;line-height:1.55;color:var(--ink);
+  background-color:var(--paper);
+  background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+  background-size:28px 28px}
+h1,h2,h3,h4{font-family:'Bricolage Grotesque','Figtree',system-ui,sans-serif;line-height:1.15;margin:0;letter-spacing:-.01em;font-weight:800}
+h1{font-size:clamp(1.9rem,4vw,2.6rem)}
+h2{font-size:1.45rem}
+h3{font-size:1.1rem}
+h4{font-size:1rem;margin:12px 0 4px}
+p{margin:0 0 .7em}
+small,.muted{color:var(--ink-2)}
+button{font:inherit;cursor:pointer}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px;border-radius:6px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+
+/* layout */
+.app{display:grid;grid-template-columns:236px minmax(0,1fr);min-height:100vh}
+.side{position:sticky;top:0;height:100vh;padding:22px 14px;background:var(--surface);border-right:1px solid var(--line);display:flex;flex-direction:column;gap:18px}
+.brand{display:flex;flex-direction:column;gap:4px;padding:0 6px}
+.mark{align-self:flex-start;background:var(--hi);color:var(--on-hi);font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:800;font-size:1.25rem;padding:1px 9px;border-radius:5px;transform:rotate(-1.5deg)}
+.brand small{font-size:.8rem}
+nav{display:flex;flex-direction:column;gap:3px}
+.nav{display:flex;align-items:center;gap:10px;padding:9px 12px;border:0;border-radius:10px;background:none;color:var(--ink);text-align:left;font-weight:600}
+.nav:hover{background:var(--soft)}
+.nav.on{background:var(--hi);color:var(--on-hi)}
+.nav svg{flex:none}
+.sidefoot{margin-top:auto;display:flex;flex-direction:column;gap:8px}
+.who{font-weight:700;display:flex;flex-direction:column;line-height:1.25}
+.who small{font-weight:500}
+.main{padding:30px clamp(16px,4vw,52px) 60px;max-width:1120px;width:100%}
+.stack>*+*{margin-top:22px}
+.row{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+.between{justify-content:space-between}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(310px,1fr));gap:22px}
+.head{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap;margin-bottom:6px}
+.head p{margin:6px 0 0;color:var(--ink-2)}
+
+/* surfaces */
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:20px}
+.panel>h3{margin-bottom:12px}
+.strip{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.strip>div{background:var(--surface);padding:16px 18px}
+.strip .num{font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:800;font-size:2rem;line-height:1.1}
+.strip small{display:block;margin-top:2px}
+.note{border-left:4px solid var(--hi);background:var(--surface);border-radius:0 10px 10px 0;padding:12px 16px;border-top:1px solid var(--line);border-right:1px solid var(--line);border-bottom:1px solid var(--line)}
+.note.warn{border-left-color:var(--warn)}
+.note.bad{border-left-color:var(--bad)}
+.note.good{border-left-color:var(--good)}
+.pill{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:3px 12px;font-size:.85rem;font-weight:600}
+.pill.hi{background:var(--hi);color:var(--on-hi);border-color:transparent}
+.pill.dim{color:var(--ink-2);font-weight:500}
+.pill.ok{border-color:var(--good)}
+.pill button{border:0;background:none;color:inherit;padding:0 0 0 2px;font-size:1rem;line-height:1}
+
+/* controls */
+.btn{display:inline-flex;align-items:center;gap:8px;justify-content:center;padding:10px 16px;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--ink);font-weight:600}
+.btn:hover{border-color:var(--ink-2)}
+.btn.pri{background:var(--accent);color:var(--on-accent);border-color:transparent}
+.btn.pri:hover{filter:brightness(1.08)}
+.btn.hi{background:var(--hi);color:var(--on-hi);border-color:transparent}
+.btn.sm{padding:6px 12px;font-size:.88rem}
+.btn.danger{color:var(--bad)}
+.btn[disabled]{opacity:.5;cursor:not-allowed}
+input,select,textarea{font:inherit;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 12px;width:100%}
+textarea{resize:vertical;min-height:120px}
+label{display:block;font-weight:600;font-size:.9rem;margin-bottom:4px}
+.field{margin-bottom:14px}
+.fields{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:0 16px}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--surface)}
+.seg button{border:0;background:none;padding:8px 16px;font-weight:600;color:var(--ink)}
+.seg button.on{background:var(--ink);color:var(--paper)}
+.chips{display:flex;gap:8px;flex-wrap:wrap}
+.chip{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:6px 14px;font-size:.9rem;color:var(--ink)}
+.chip:hover{border-color:var(--accent)}
+
+/* auth */
+.auth{min-height:100vh;display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr)}
+.auth .left{padding:clamp(28px,6vw,72px);display:flex;flex-direction:column;justify-content:center;gap:22px;background:var(--ink);color:var(--paper)}
+.auth .left h1{color:var(--paper)}
+.auth .left .mark{font-size:1.4rem}
+.auth .left ul{margin:0;padding:0;list-style:none;display:grid;gap:14px}
+.auth .left li{display:grid;gap:2px;padding-left:16px;border-left:3px solid var(--hi)}
+.auth .left li span{opacity:.8}
+.auth .right{padding:clamp(24px,5vw,64px);display:flex;flex-direction:column;justify-content:center;max-width:520px;width:100%;margin:0 auto}
+.auth .demo{margin-top:22px;padding-top:18px;border-top:1px dashed var(--line)}
+
+/* lists */
+.list{list-style:none;margin:0;padding:0}
+.list li{display:flex;gap:12px;align-items:center;justify-content:space-between;padding:11px 0;border-bottom:1px solid var(--line)}
+.list li:last-child{border-bottom:0}
+.list .t{display:flex;flex-direction:column;min-width:0}
+.list .t b{overflow-wrap:anywhere}
+.done b{text-decoration:line-through;color:var(--ink-2)}
+.check{width:22px;height:22px;flex:none;accent-color:var(--accent)}
+.bar{height:10px;border-radius:99px;background:var(--soft);overflow:hidden}
+.bar>i{display:block;height:100%;border-radius:99px}
+.subj{display:grid;grid-template-columns:110px 1fr 44px;gap:10px;align-items:center;margin:10px 0}
+.chart{width:100%;height:auto;display:block}
+.chart text{font-family:inherit}
+
+/* chat */
+.chat{display:flex;flex-direction:column;gap:12px;min-height:280px;max-height:56vh;overflow:auto;padding:4px 2px}
+.msg{max-width:88%;padding:11px 15px;border-radius:14px;overflow-wrap:anywhere}
+.msg.u{align-self:flex-end;background:var(--accent);color:var(--on-accent);border-bottom-right-radius:4px}
+.msg.a{align-self:flex-start;background:var(--surface);border:1px solid var(--line);border-bottom-left-radius:4px}
+.msg p:last-child{margin-bottom:0}
+.msg ul,.msg ol{margin:.3em 0 .6em;padding-left:1.3em}
+.msg pre,.out pre{background:var(--soft);padding:10px 12px;border-radius:8px;overflow:auto;font-size:.88rem}
+.msg code,.out code{background:var(--soft);padding:1px 5px;border-radius:5px}
+.out{margin-top:16px}
+.out ul,.out ol{padding-left:1.3em}
+.think{color:var(--ink-2);font-style:italic}
+
+/* quiz + cards */
+.opt{display:block;width:100%;text-align:left;padding:12px 14px;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:10px;margin-bottom:10px}
+.opt:hover:not([disabled]){border-color:var(--accent)}
+.opt.right{border-color:var(--good);background:color-mix(in srgb,var(--good) 16%,var(--surface))}
+.opt.wrong{border-color:var(--bad);background:color-mix(in srgb,var(--bad) 14%,var(--surface))}
+.flash{min-height:190px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:10px;padding:26px;border:2px solid var(--ink);border-radius:16px;background:var(--surface);box-shadow:6px 6px 0 var(--hi)}
+.flash .side-tag{font-size:.8rem;color:var(--ink-2);font-weight:600}
+.flash .big{font-family:'Bricolage Grotesque',system-ui,sans-serif;font-size:1.4rem;font-weight:600}
+
+/* focus timer */
+.timer{text-align:center;padding:28px 18px;border:1px solid var(--line);border-radius:18px;background:var(--surface)}
+.digits{font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:800;font-size:clamp(4rem,15vw,7.5rem);line-height:1;font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+.sweep{height:16px;border-radius:4px;background:var(--soft);margin:14px auto 0;max-width:460px;overflow:hidden;transform:rotate(-.6deg)}
+.sweep>i{display:block;height:100%;background:var(--hi);transition:width 1s linear}
+
+/* toast */
+#toast{position:fixed;left:50%;bottom:26px;transform:translate(-50%,30px);background:var(--ink);color:var(--paper);padding:10px 18px;border-radius:10px;opacity:0;pointer-events:none;transition:.25s;z-index:50;max-width:92vw}
+#toast.show{opacity:1;transform:translate(-50%,0)}
+
+@media (max-width:820px){
+  .app{grid-template-columns:1fr}
+  .side{position:fixed;left:0;right:0;bottom:0;top:auto;height:auto;flex-direction:row;padding:6px;z-index:20;border-right:0;border-top:1px solid var(--line);gap:0;align-items:center}
+  .brand,.sidefoot .who{display:none}
+  nav{flex-direction:row;overflow-x:auto;flex:1;gap:2px}
+  .nav{flex-direction:column;gap:2px;padding:6px 10px;font-size:.72rem;white-space:nowrap}
+  .sidefoot{margin:0;flex-direction:column;gap:2px}
+  .sidefoot .btn{padding:3px 8px;font-size:.7rem}
+  .sidefoot .btn svg{display:none}
+  .main{padding-bottom:110px}
+  .auth{grid-template-columns:1fr}
+  .subj{grid-template-columns:90px 1fr 40px}
+}
+@media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<div id="toast" role="status" aria-live="polite"></div>
+<script>
+(function(){
+'use strict';
+
+/* ---------- helpers ---------- */
+const $=(s,r=document)=>r.querySelector(s);
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const uid=()=>Math.random().toString(36).slice(2,10);
+const dstr=(d=new Date())=>{const z=new Date(d.getTime()-d.getTimezoneOffset()*6e4);return z.toISOString().slice(0,10)};
+const addDays=(n,d=new Date())=>{const x=new Date(d);x.setDate(x.getDate()+n);return x};
+const daysBetween=(a,b)=>Math.round((new Date(b+'T00:00')-new Date(a+'T00:00'))/864e5);
+const fmtDate=k=>new Date(k+'T00:00').toLocaleDateString('en',{day:'numeric',month:'short'});
+const ICON={
+  home:'<path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/>',
+  chat:'<path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/>',
+  notes:'<path d="M6 3h9l4 4v14H6z"/><path d="M14 3v5h5M9 13h7M9 17h5"/>',
+  quiz:'<circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.7.4-1 .9-1 1.7M12 17h.01"/>',
+  cards:'<rect x="3" y="6" width="14" height="12" rx="2"/><path d="M7 3h12a2 2 0 0 1 2 2v10"/>',
+  plan:'<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>',
+  focus:'<circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2M9 2h6"/>',
+  user:'<circle cx="12" cy="8" r="4"/><path d="M4 21c1-4 4-6 8-6s7 2 8 6"/>',
+  moon:'<path d="M20 14.5A8 8 0 0 1 9.5 4 8 8 0 1 0 20 14.5z"/>'
+};
+const ico=n=>'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+ICON[n]+'</svg>';
+
+/* ---------- storage (per-browser prototype) ---------- */
+const KEY='studymate_v1';
+const blank=()=>({users:[],me:null,profiles:{},focus:[],quizzes:[],tasks:[],cards:[],links:[],goals:{},messages:[],blocklist:{},chats:{},notes:{},active:null,theme:null});
+function loadDB(){try{const r=localStorage.getItem(KEY);if(r)return Object.assign(blank(),JSON.parse(r))}catch(e){}return blank()}
+let DB=loadDB();
+function save(){try{localStorage.setItem(KEY,JSON.stringify(DB))}catch(e){}}
+function applyTheme(){const r=document.documentElement;if(DB.theme)r.setAttribute('data-theme',DB.theme);else r.removeAttribute('data-theme')}
+let tt;function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('show');clearTimeout(tt);tt=setTimeout(()=>t.classList.remove('show'),3400)}
+
+const me=()=>DB.users.find(u=>u.id===DB.me)||null;
+const prof=id=>DB.profiles[id]||null;
+const goalOf=sid=>(DB.goals[sid]&&DB.goals[sid].minutes)||60;
+const DEFAULT_BLOCK=['instagram.com','youtube.com','facebook.com','x.com','snapchat.com','reddit.com','tiktok.com'];
+const blocklist=sid=>DB.blocklist[sid]||(DB.blocklist[sid]=DEFAULT_BLOCK.slice());
+async function hash(p){try{const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode('sm:'+p));return[...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('')}catch(e){return'plain:'+p}}
+const newCode=()=>'SM-'+Array.from({length:5},()=>'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'[Math.floor(Math.random()*32)]).join('');
+
+/* ---------- stats shared by student and parent panels ---------- */
+function stats(sid){
+  const F=DB.focus.filter(f=>f.sid===sid),Q=DB.quizzes.filter(q=>q.sid===sid),T=DB.tasks.filter(t=>t.sid===sid),C=DB.cards.filter(c=>c.sid===sid);
+  const today=dstr(),minBy={};
+  F.forEach(f=>{minBy[f.date]=(minBy[f.date]||0)+f.minutes});
+  const week=[...Array(7)].map((_,i)=>{const d=addDays(i-6),k=dstr(d);return{k,label:d.toLocaleDateString('en',{weekday:'short'}),min:minBy[k]||0}});
+  const active=new Set([...F.map(f=>f.date),...Q.map(q=>q.date)]);
+  let streak=0,d=new Date();if(!active.has(dstr(d)))d=addDays(-1);
+  while(active.has(dstr(d))){streak++;d=addDays(-1,d)}
+  const last=[...active].sort().pop()||null;
+  const subj={},topic={};
+  Q.forEach(q=>{
+    const a=subj[q.subject]||(subj[q.subject]={c:0,t:0});a.c+=q.score;a.t+=q.total;
+    (q.items||[]).forEach(it=>{const k=q.subject+'|'+it.topic,b=topic[k]||(topic[k]={subject:q.subject,topic:it.topic,c:0,t:0});b.t++;if(it.ok)b.c++});
+  });
+  const weak=Object.values(topic).filter(x=>x.t>=2&&x.c/x.t<.6).sort((a,b)=>a.c/a.t-b.c/b.t).slice(0,5);
+  const recent=Q.slice(-10),rs=recent.reduce((a,q)=>a+q.score,0),rt=recent.reduce((a,q)=>a+q.total,0);
+  const tt=T.filter(t=>t.date===today);
+  const wkStart=dstr(addDays(-6));
+  const F7=F.filter(f=>f.date>=wkStart);
+  return{
+    week,weekMin:week.reduce((a,x)=>a+x.min,0),todayMin:minBy[today]||0,streak,last,subj,weak,
+    quizAvg:rt?Math.round(rs/rt*100):null,quizCount:Q.length,
+    tasksToday:{done:tt.filter(t=>t.done).length,total:tt.length},
+    tasksDone:T.filter(t=>t.done).length,tasksTotal:T.length,
+    planPct:T.length?Math.round(T.filter(t=>t.done).length/T.length*100):null,
+    tabs7:F7.reduce((a,f)=>a+(f.tabs||0),0),blocked7:F7.reduce((a,f)=>a+(f.blocked||0),0),sessions7:F7.length,
+    due:C.filter(c=>c.due<=today).length,cards:C.length,totalMin:F.reduce((a,f)=>a+f.minutes,0),sessions:F.length,
+    perfect:Q.some(q=>q.score===q.total)
+  };
+}
+function alertsFor(sid){
+  const s=stats(sid),out=[];
+  const idle=s.last?daysBetween(s.last,dstr()):null;
+  if(idle===null)out.push({t:'bad',m:'No study activity yet.'});
+  else if(idle>=2)out.push({t:'bad',m:'No study activity for '+idle+' days.'});
+  if(s.quizAvg!==null&&s.quizCount>=2&&s.quizAvg<50)out.push({t:'warn',m:'Quiz average is low ('+s.quizAvg+'%). Extra revision may help.'});
+  if(s.tabs7+s.blocked7>=8)out.push({t:'warn',m:(s.tabs7+s.blocked7)+' distractions during focus sessions this week.'});
+  if(s.weak.length)out.push({t:'',m:'Weak topics: '+s.weak.slice(0,3).map(w=>w.topic).join(', ')+'.'});
+  if(!out.length)out.push({t:'good',m:'On track. No alerts this week.'});
+  return out;
+}
+
+/* ---------- demo data ---------- */
+function seedDemo(){
+  if(DB.users.some(u=>u.id==='demo-s'))return;
+  DB.users.push({id:'demo-s',name:'Riya Sharma',email:'riya@demo.local',hash:'',role:'student',code:'SM-RIYA7'});
+  DB.users.push({id:'demo-p',name:'Mr. Sharma',email:'parent@demo.local',hash:'',role:'parent'});
+  DB.profiles['demo-s']={course:'Class 12 Science (CBSE)',subjects:['Mathematics','Physics','Chemistry'],goal:'Score 90% or more in boards',exam:dstr(addDays(38)),hours:3,style:'Practice-based',levels:{Mathematics:3,Physics:2,Chemistry:2}};
+  let seed=11;const rnd=()=>(seed=(seed*9301+49297)%233280)/233280;
+  const subs=['Mathematics','Physics','Chemistry'];
+  for(let i=13;i>=0;i--){
+    if(i>0&&rnd()<.18)continue;
+    const n=1+Math.floor(rnd()*3);
+    for(let j=0;j<n;j++){
+      const m=[25,25,30,45,50][Math.floor(rnd()*5)];
+      DB.focus.push({id:uid(),sid:'demo-s',date:dstr(addDays(-i)),minutes:m,completed:true,subject:subs[Math.floor(rnd()*3)],tabs:rnd()<.5?Math.floor(rnd()*3):0,blocked:rnd()<.35?Math.floor(rnd()*3):0});
+    }
+  }
+  const T={Mathematics:['Integration','Probability','Matrices','Differentiation'],Physics:['Optics','Electrostatics','Current electricity'],Chemistry:['Organic reactions','Equilibrium','Electrochemistry']};
+  const weakSet=new Set(['Electrostatics','Equilibrium']);
+  for(let k=0;k<9;k++){
+    const subject=subs[k%3],items=[];
+    for(let q=0;q<5;q++){
+      const tp=T[subject][Math.floor(rnd()*T[subject].length)];
+      const p=weakSet.has(tp)?.25:(subject==='Mathematics'?.85:.65);
+      items.push({topic:tp,ok:rnd()<p});
+    }
+    DB.quizzes.push({id:uid(),sid:'demo-s',date:dstr(addDays(-(12-k))),subject,level:2,score:items.filter(x=>x.ok).length,total:5,items});
+  }
+  const td=dstr(),tm=dstr(addDays(1));
+  [['Mathematics','Integration: 10 practice problems',45,td,true],['Physics','Electrostatics: Gauss law revision',40,td,false],['Chemistry','Equilibrium: numericals',40,td,false],
+   ['Physics','Optics: ray diagrams',30,tm,false],['Mathematics','Probability past papers',50,tm,false],['Chemistry','Organic reactions summary',35,dstr(addDays(-1)),true],['Mathematics','Matrices worksheet',40,dstr(addDays(-2)),true]]
+  .forEach(([subject,title,minutes,date,done])=>DB.tasks.push({id:uid(),sid:'demo-s',subject,title,minutes,date,done}));
+  [['Coulomb\'s law','Force between two point charges is proportional to the product of charges and inversely proportional to the square of the distance.','Physics',-1],
+   ['Le Chatelier\'s principle','If a system at equilibrium is disturbed, it shifts to reduce the effect of the disturbance.','Chemistry',0],
+   ['Derivative of sin x','cos x','Mathematics',0],['Snell\'s law','n1 sin(i) = n2 sin(r)','Physics',3],['Integration by parts','Integral of u dv = uv minus integral of v du','Mathematics',5],['Kc expression','Ratio of product concentrations to reactant concentrations, each raised to its coefficient.','Chemistry',2]]
+  .forEach(([front,back,subject,off])=>DB.cards.push({id:uid(),sid:'demo-s',front,back,subject,box:1,due:dstr(addDays(off))}));
+  DB.links.push({id:uid(),pid:'demo-p',sid:'demo-s',status:'approved'});
+  DB.goals['demo-s']={minutes:90};
+  DB.messages.push({id:uid(),pid:'demo-p',sid:'demo-s',text:'Proud of your streak, Riya. Keep going!',date:dstr(),read:false});
+  save();
+}
+
+/* ---------- AI: Claude runtime when opened inside Claude, otherwise the StudyMate server ---------- */
+let SAMPLE=null,SAMPLE_READY=false,AI_STATE='checking'; // 'claude' | 'server' | 'nokey' | 'noserver'
+function parseJsonLoose(t){
+  const s=String(t||'').trim().replace(/^```(?:json)?\s*/i,'').replace(/```\s*$/,'').trim();
+  try{return JSON.parse(s)}catch(e){}
+  const a=s.search(/[\[{]/),z=Math.max(s.lastIndexOf(']'),s.lastIndexOf('}'));
+  if(a>=0&&z>a){try{return JSON.parse(s.slice(a,z+1))}catch(e){}}
+  throw{code:'invalid_json'};
+}
+async function serverChat(input,opts){
+  opts=opts||{};
+  let messages=typeof input==='string'?[{role:'user',content:input}]:input.map(m=>({role:m.role,content:m.content}));
+  let system=opts.system||'';
+  // the tutor sends its rules as a leading user turn; the server API takes them as a system prompt
+  if(messages.length>1&&messages[0].role==='user'&&messages[1].role==='user'){system=messages[0].content;messages=messages.slice(1)}
+  let res;
+  try{
+    res=await fetch('/api/ai',{method:'POST',headers:{'Content-Type':'application/json'},signal:opts.signal,
+      body:JSON.stringify({system,messages,stream:!!opts.onText,maxTokens:opts.maxTokens||1200})});
+  }catch(e){if(e&&e.name==='AbortError')throw{code:'cancelled',text:''};throw{code:'upstream_error'}}
+  if(!res.ok){let j={};try{j=await res.json()}catch(e){}throw{code:j.code||'upstream_error'}}
+  if(!opts.onText){const j=await res.json();if(!j.text)throw{code:'empty_completion'};return{text:j.text}}
+  const rd=res.body.getReader(),dec=new TextDecoder();let buf='',acc='';
+  try{
+    for(;;){
+      const r=await rd.read();if(r.done)break;
+      buf+=dec.decode(r.value,{stream:true});
+      let i;
+      while((i=buf.indexOf('\n\n'))>=0){
+        const ev=buf.slice(0,i);buf=buf.slice(i+2);
+        const line=ev.split('\n').find(l=>l.startsWith('data:'));if(!line)continue;
+        const data=line.slice(5).trim();if(data==='[DONE]')continue;
+        let j;try{j=JSON.parse(data)}catch(x){continue}
+        if(j.error)throw{code:j.error,text:acc};
+        if(j.delta){acc+=j.delta;opts.onText({text:acc,delta:j.delta})}
+      }
+    }
+  }catch(e){
+    if(e&&e.name==='AbortError')throw{code:'cancelled',text:acc};
+    if(e&&e.code)throw e;
+    throw{code:'upstream_error',text:acc};
+  }
+  if(!acc)throw{code:'empty_completion'};
+  return{text:acc};
+}
+serverChat.json=async(prompt,opts)=>{
+  const o=Object.assign({},opts,{onText:null,system:'You are a JSON API. Reply with only valid JSON. No explanation and no markdown fences.',maxTokens:(opts&&opts.maxTokens)||3000});
+  const r=await serverChat(prompt,o);
+  return parseJsonLoose(r.text);
+};
+(async()=>{
+  try{if(window.claude&&window.claude.use){SAMPLE=await window.claude.use('sample');AI_STATE='claude'}}catch(e){SAMPLE=null}
+  if(!SAMPLE){
+    try{
+      const r=await fetch('/api/health',{cache:'no-store'});
+      const j=r.ok?await r.json():null;
+      if(j&&j.ok){if(j.aiConfigured){SAMPLE=serverChat;AI_STATE='server'}else AI_STATE='nokey'}else AI_STATE='noserver';
+    }catch(e){AI_STATE='noserver'}
+  }
+  SAMPLE_READY=true;updateAiNote();
+})();
+const noAiMessage=()=>AI_STATE==='nokey'?'The StudyMate server has no API key yet. Add ANTHROPIC_API_KEY to the .env file and restart the server.'
+  :AI_STATE==='checking'?'Still checking the AI connection. Try again in a moment.'
+  :'The AI needs the StudyMate server. Start it with "node server.js" and open http://localhost:3000, or open this page inside Claude.';
+const AIERR={
+  get no_ai(){return noAiMessage()},
+  not_granted:'AI is switched off for this page. Reload and choose Allow when asked.',
+  rate_limited:'Too many AI requests. Wait a minute, then try again.',
+  session_expired:'Sign in to Claude again, then retry.',
+  sampling_disabled:'Claude is not available on this account.',
+  refused:'The AI could not help with that request. Try rewording it.',
+  empty_completion:'No answer came back. Try again with a shorter request.',
+  invalid_json:'The AI reply was not in the expected format. Try again.',
+  prompt_too_large:'That text is too long. Paste a shorter section.',
+  auth_error:'The server\'s API key was rejected. Check ANTHROPIC_API_KEY in the .env file.',
+  upstream_error:'Connection problem. Try again.'
+};
+const aiMsg=e=>AIERR[e&&e.code]||AIERR.upstream_error;
+const aiNoteHtml=()=>(SAMPLE_READY&&!SAMPLE)?'<div class="note warn">'+esc(noAiMessage())+'</div>':'';
+function updateAiNote(){const n=$('#aiNote');if(n)n.innerHTML=aiNoteHtml()}
+const aiNote=()=>'<div id="aiNote">'+aiNoteHtml()+'</div>';
+
+function md(t){
+  const codes=[];
+  let s=String(t).replace(/```[a-z]*\n?([\s\S]*?)```/g,(m,c)=>{codes.push(c.replace(/\n$/,''));return'\u0000'+(codes.length-1)+'\u0000'});
+  s=esc(s).replace(/`([^`\n]+)`/g,'<code>$1</code>').replace(/\*\*([^*\n]+)\*\*/g,'<strong>$1</strong>');
+  let out='',list=null;const close=()=>{if(list){out+='</'+list+'>';list=null}};
+  for(const raw of s.split('\n')){
+    const line=raw.trimEnd();let m;
+    if((m=line.match(/^\s*[-*\u2022]\s+(.*)/))){if(list!=='ul'){close();out+='<ul>';list='ul'}out+='<li>'+m[1]+'</li>'}
+    else if((m=line.match(/^\s*\d+[.)]\s+(.*)/))){if(list!=='ol'){close();out+='<ol>';list='ol'}out+='<li>'+m[1]+'</li>'}
+    else if((m=line.match(/^#{1,4}\s+(.*)/))){close();out+='<h4>'+m[1]+'</h4>'}
+    else if(!line.trim()){close()}
+    else{close();out+='<p>'+line+'</p>'}
+  }
+  close();
+  return out.replace(/\u0000(\d+)\u0000/g,(m,i)=>'<pre>'+esc(codes[+i])+'</pre>');
+}
+
+/* ---------- extension bridge (web page <-> browser extension) ---------- */
+const EXT={ok:false};
+function extSend(msg){try{window.postMessage(Object.assign({source:'studymate-web'},msg),'*')}catch(e){}}
+function updateExtBadge(){
+  const b=$('#extBadge');if(!b)return;
+  b.className='pill '+(EXT.ok?'ok':'dim');
+  b.textContent=EXT.ok?'Extension connected: sites will be blocked':'Extension not detected: sites will not be blocked';
+}
+window.addEventListener('message',e=>{
+  const d=e.data;if(!d||d.source!=='studymate-ext')return;
+  if(d.type==='READY'){EXT.ok=true;updateExtBadge()}
+  if(d.type==='BLOCKED'&&DB.active){DB.active.blocked=Number(d.attempts)||0;save()}
+  if(d.type==='STOPPED'&&d.sessionId){
+    const f=DB.focus.find(x=>x.id===d.sessionId);
+    if(f){f.blocked=Math.max(f.blocked||0,Number(d.attempts)||0);save()}
+  }
+});
+
+/* ---------- runtime (not saved) ---------- */
+let route='dash',authMode='login',authRole='student',authErr='';
+let QZ={stage:'setup',subject:null,topic:'',source:null,qs:[],i:0,picked:null,answers:[],level:2,prefill:null,err:null,result:null,ctl:null};
+let CR={queue:null,i:0,show:false};
+let TUT={busy:false,ctl:null,err:null};
+let NT={busy:false,out:'',err:'',subject:null,ctl:null};
+let PL={busy:false,err:''};
+let FC={exitOpen:false};
+let PS={child:null,summary:'',busy:false,err:''};
+let LK={msg:''};
+
+const greeting=()=>{const h=new Date().getHours();return h<12?'Good morning':h<17?'Good afternoon':'Good evening'};
+const levelName=n=>['','Easy','Standard','Challenging'][n]||'Standard';
+
+/* ---------- shell ---------- */
+const NAV_S=[['dash','Home','home'],['tutor','AI tutor','chat'],['notes','Notes','notes'],['quiz','Quizzes','quiz'],['cards','Flashcards','cards'],['plan','Study plan','plan'],['focus','Focus mode','focus'],['profile','Profile','user']];
+const NAV_P=[['progress','Progress','home'],['link','Link a child','user']];
+function shell(u,body){
+  const nav=u.role==='student'?NAV_S:NAV_P;
+  return '<div class="app"><aside class="side"><div class="brand"><span class="mark">StudyMate</span><small>AI study assistant</small></div><nav aria-label="Main">'+
+    nav.map(([k,l,i])=>'<button class="nav'+(route===k?' on':'')+'" data-a="go" data-r="'+k+'"'+(route===k?' aria-current="page"':'')+'>'+ico(i)+'<span>'+l+'</span></button>').join('')+
+    '</nav><div class="sidefoot"><div class="who">'+esc(u.name)+'<small>'+(u.role==='student'?'Student':'Parent')+'</small></div>'+
+    '<button class="btn sm" data-a="theme" aria-label="Switch light or dark theme">'+ico('moon')+'Theme</button><button class="btn sm" data-a="logout">Sign out</button></div></aside>'+
+    '<main class="main" id="main">'+body+'</main></div>';
+}
+
+/* ---------- auth ---------- */
+function viewAuth(){
+  const su=authMode==='signup';
+  return '<div class="auth"><section class="left"><span class="mark">StudyMate</span><h1>Study at your own pace, with a tutor that adapts.</h1>'+
+    '<ul><li><b>Students</b><span>Ask doubts, turn notes into quizzes, follow a plan built around weak topics, and stay off social media with focus mode.</span></li>'+
+    '<li><b>Parents</b><span>See study time, streaks and quiz progress for each child. Chats and notes stay private.</span></li></ul></section>'+
+    '<section class="right"><h2>'+(su?'Create your account':'Welcome back')+'</h2><p class="muted">'+(su?'Choose your role to get started.':'Sign in to continue.')+'</p>'+
+    '<div class="seg" role="group" aria-label="Role" style="margin:10px 0 18px"><button data-a="role" data-v="student" class="'+(authRole==='student'?'on':'')+'">Student</button><button data-a="role" data-v="parent" class="'+(authRole==='parent'?'on':'')+'">Parent</button></div>'+
+    '<form data-form="auth">'+
+    (su?'<div class="field"><label for="aName">Full name</label><input id="aName" name="name" autocomplete="name" required></div>':'')+
+    '<div class="field"><label for="aEmail">Email</label><input id="aEmail" name="email" type="email" autocomplete="email" required></div>'+
+    '<div class="field"><label for="aPass">Password</label><input id="aPass" name="pass" type="password" autocomplete="'+(su?'new-password':'current-password')+'" minlength="6" required></div>'+
+    (authErr?'<p class="note bad" role="alert">'+esc(authErr)+'</p>':'')+
+    '<button class="btn pri" style="width:100%">'+(su?'Sign up as '+authRole:'Sign in as '+authRole)+'</button></form>'+
+    '<p style="margin-top:14px">'+(su?'Already have an account? ':'New here? ')+'<button class="btn sm" data-a="mode">'+(su?'Sign in':'Create account')+'</button></p>'+
+    '<div class="demo"><b>Just want to look around?</b><div class="row" style="margin-top:10px"><button class="btn hi" data-a="demoS">Explore as a student</button><button class="btn" data-a="demoP">Explore as a parent</button></div>'+
+    '<p class="muted" style="margin-top:12px;font-size:.85rem">Prototype: accounts and progress are stored only in this browser.</p></div></section></div>';
+}
+
+/* ---------- onboarding / edit profile ---------- */
+function onboardForm(u,edit){
+  const p=prof(u.id)||{};
+  return '<form data-form="onboard"><div class="fields">'+
+    '<div class="field"><label for="oCourse">Class or course</label><input id="oCourse" name="course" value="'+esc(p.course||'')+'" placeholder="Class 12 Science" required></div>'+
+    '<div class="field"><label for="oSubj">Subjects (comma separated)</label><input id="oSubj" name="subjects" value="'+esc((p.subjects||[]).join(', '))+'" placeholder="Mathematics, Physics, Chemistry" required></div>'+
+    '<div class="field"><label for="oGoal">Main goal</label><input id="oGoal" name="goal" value="'+esc(p.goal||'')+'" placeholder="Score 85% in finals"></div>'+
+    '<div class="field"><label for="oExam">Exam date</label><input id="oExam" name="exam" type="date" value="'+esc(p.exam||'')+'"></div>'+
+    '<div class="field"><label for="oHours">Study hours per day</label><input id="oHours" name="hours" type="number" min="0.5" max="14" step="0.5" value="'+esc(p.hours||2)+'"></div>'+
+    '<div class="field"><label for="oStyle">How do you learn best?</label><select id="oStyle" name="style">'+['Visual (diagrams, charts)','Reading and notes','Practice-based','Listening and discussion'].map(o=>'<option'+(p.style===o?' selected':'')+'>'+o+'</option>').join('')+'</select></div>'+
+    '</div><button class="btn pri">'+(edit?'Save profile':'Save and continue')+'</button></form>';
+}
+function viewOnboard(u){
+  return '<div class="stack" style="max-width:720px"><div class="head"><div><h1>Tell us how you study</h1><p>This takes a minute and shapes your quizzes, plan and tutor.</p></div></div><div class="panel">'+onboardForm(u,false)+'</div></div>';
+}
+
+/* ---------- charts ---------- */
+function barChart(week,goal){
+  const W=420,H=170,pad=18,bw=34,max=Math.max(goal,...week.map(x=>x.min),30)*1.12,gap=(W-pad*2-bw*7)/6,base=H-26,top=22;
+  let s='<svg class="chart" viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Focus minutes for the last 7 days">';
+  const gy=base-(goal/max)*(base-top);
+  s+='<line x1="'+pad+'" x2="'+(W-pad)+'" y1="'+gy+'" y2="'+gy+'" stroke="var(--ink-2)" stroke-dasharray="4 4"/><text x="'+(W-pad)+'" y="'+(gy-5)+'" text-anchor="end" font-size="11" fill="var(--ink-2)">goal '+goal+' min</text>';
+  week.forEach((d,i)=>{
+    const x=pad+i*(bw+gap),h=(d.min/max)*(base-top),y=base-h,t=i===6;
+    s+='<rect x="'+x+'" y="'+y+'" width="'+bw+'" height="'+(d.min?Math.max(h,3):0)+'" rx="5" fill="'+(t?'var(--hi)':'var(--accent)')+'"'+(t?' stroke="var(--ink)" stroke-width="1.2"':'')+'/>';
+    if(d.min)s+='<text x="'+(x+bw/2)+'" y="'+(y-5)+'" text-anchor="middle" font-size="11" fill="var(--ink)">'+d.min+'</text>';
+    s+='<text x="'+(x+bw/2)+'" y="'+(H-8)+'" text-anchor="middle" font-size="11" fill="var(--ink-2)">'+d.label+'</text>';
+  });
+  return s+'</svg>';
+}
+function subjectBars(s,subjects){
+  const rows=(subjects||Object.keys(s.subj)).map(n=>{
+    const a=s.subj[n];if(!a)return'<div class="subj"><span>'+esc(n)+'</span><div class="bar"></div><small>none</small></div>';
+    const p=Math.round(a.c/a.t*100),col=p>=75?'var(--good)':p>=50?'var(--warn)':'var(--bad)';
+    return'<div class="subj"><span>'+esc(n)+'</span><div class="bar" role="img" aria-label="'+esc(n)+' '+p+' percent"><i style="width:'+p+'%;background:'+col+'"></i></div><b>'+p+'%</b></div>';
+  });
+  return rows.join('')||'<p class="muted">Take a quiz to see subject strengths.</p>';
+}
+function weakList(s){
+  return s.weak.length?'<ul class="list">'+s.weak.map(w=>'<li><div class="t"><b>'+esc(w.topic)+'</b><small>'+esc(w.subject)+' &middot; '+w.c+' of '+w.t+' correct</small></div><span class="pill">'+Math.round(w.c/w.t*100)+'%</span></li>').join('')+'</ul>':'<p class="muted">No weak topics yet. Weak topics appear after a few quiz answers on the same topic.</p>';
+}
+
+/* ---------- student: home ---------- */
+function nextSteps(u,s,p){
+  const out=[],lv=p.levels||{};
+  (p.subjects||[]).filter(x=>!lv[x]).slice(0,1).forEach(x=>out.push({t:'Take a diagnostic quiz in '+x,d:'A short quiz finds your starting level.',a:'quizFor',v:x,l:'Start quiz'}));
+  if(s.weak[0])out.push({t:'Practice '+s.weak[0].topic,d:s.weak[0].subject+' is where you lose the most marks.',a:'quizFor',v:s.weak[0].subject,tp:s.weak[0].topic,l:'Practice'});
+  if(s.due>0)out.push({t:'Revise '+s.due+' flashcard'+(s.due>1?'s':''),d:'They are due today. Short reviews stick best.',a:'go',v:'cards',l:'Review'});
+  const left=s.tasksToday.total-s.tasksToday.done;
+  if(left>0)out.push({t:left+' task'+(left>1?'s':'')+' left in today\'s plan',d:'Finish them to keep your plan on track.',a:'go',v:'plan',l:'Open plan'});
+  if(s.todayMin<goalOf(u.id))out.push({t:'Start a focus session',d:(goalOf(u.id)-s.todayMin)+' minutes to reach today\'s goal.',a:'go',v:'focus',l:'Focus'});
+  if(!out.length)out.push({t:'You are all caught up',d:'Ask the tutor about something new.',a:'go',v:'tutor',l:'Open tutor'});
+  return out.slice(0,4);
+}
+function badges(s){
+  return[['First focus session',s.sessions>=1],['3-day streak',s.streak>=3],['7-day streak',s.streak>=7],['First quiz',s.quizCount>=1],['Perfect score',s.perfect],['100 focus minutes',s.totalMin>=100],['500 focus minutes',s.totalMin>=500]];
+}
+function viewDash(u){
+  const s=stats(u.id),p=prof(u.id),goal=goalOf(u.id);
+  const pend=DB.links.filter(l=>l.sid===u.id&&l.status==='pending');
+  const msgs=DB.messages.filter(m=>m.sid===u.id&&!m.read);
+  const days=p.exam?daysBetween(dstr(),p.exam):null;
+  let h='<div class="stack"><div class="head"><div><h1>'+greeting()+', '+esc(u.name.split(' ')[0])+'</h1><p>'+
+    (days!==null&&days>=0?days+' day'+(days===1?'':'s')+' to your exam. ':'')+(p.goal?'Goal: '+esc(p.goal)+'.':'')+'</p></div><span class="pill hi">Streak: '+s.streak+' day'+(s.streak===1?'':'s')+'</span></div>';
+  pend.forEach(l=>{const par=DB.users.find(x=>x.id===l.pid);h+='<div class="note" role="group"><b>'+esc(par?par.name:'A parent')+'</b> wants to view your progress. They will see study time and scores, never your chats or notes.<div class="row" style="margin-top:8px"><button class="btn sm pri" data-a="approve" data-id="'+l.id+'">Approve</button><button class="btn sm" data-a="reject" data-id="'+l.id+'">Decline</button></div></div>'});
+  msgs.forEach(m=>{const par=DB.users.find(x=>x.id===m.pid);h+='<div class="note good"><b>Message from '+esc(par?par.name:'your parent')+':</b> '+esc(m.text)+' <button class="btn sm" style="margin-left:8px" data-a="readMsg" data-id="'+m.id+'">Dismiss</button></div>'});
+  h+='<div class="strip"><div><div class="num">'+s.todayMin+'<small style="display:inline;font-size:.9rem"> / '+goal+'</small></div><small>Focus minutes today</small></div>'+
+    '<div><div class="num">'+s.tasksToday.done+' / '+s.tasksToday.total+'</div><small>Tasks done today</small></div>'+
+    '<div><div class="num">'+(s.quizAvg===null?'-':s.quizAvg+'%')+'</div><small>Quiz average</small></div>'+
+    '<div><div class="num">'+s.due+'</div><small>Flashcards due</small></div></div>';
+  h+='<div class="grid2"><div class="panel"><h3>Your next steps</h3><ul class="list">'+nextSteps(u,s,p).map(n=>'<li><div class="t"><b>'+esc(n.t)+'</b><small>'+esc(n.d)+'</small></div><button class="btn sm" data-a="'+n.a+'" data-v="'+esc(n.v)+'"'+(n.tp?' data-tp="'+esc(n.tp)+'"':'')+'>'+n.l+'</button></li>').join('')+'</ul></div>'+
+    '<div class="panel"><h3>Focus minutes, last 7 days</h3>'+barChart(s.week,goal)+'</div></div>';
+  h+='<div class="grid2"><div class="panel"><h3>Subject strength</h3>'+subjectBars(s,p.subjects)+'</div><div class="panel"><h3>Topics to work on</h3>'+weakList(s)+'</div></div>';
+  h+='<div class="panel"><h3>Badges</h3><div class="chips">'+badges(s).map(([n,ok])=>'<span class="pill '+(ok?'hi':'dim')+'">'+(ok?'&#10003; ':'')+n+'</span>').join('')+'</div></div></div>';
+  return h;
+}
+
+/* ---------- student: tutor ---------- */
+const tutorRules=(u,p)=>'You are StudyMate, a patient tutor for a student in '+(p.course||'school')+' studying '+(p.subjects||[]).join(', ')+'. Learning style: '+(p.style||'any')+'. Explain at a '+(DB.tutorLevel||'intermediate')+' level, step by step, in simple language, with one short example. Write maths in plain text, no LaTeX. End with one quick question to check understanding. Keep answers under 250 words. Reply in the language the student writes in. If asked something unrelated to studying, gently steer back.';
+function viewTutor(u){
+  const p=prof(u.id),chat=DB.chats[u.id]||[];
+  const chips=[(p.subjects[0]?'Explain the basics of '+p.subjects[0]:'Explain photosynthesis'),'Give me a study tip for exam week','Test me with one question'];
+  let h='<div class="stack"><div class="head"><div><h1>AI tutor</h1><p>Ask a doubt and get a step-by-step explanation.</p></div><div class="row"><label for="tLevel" class="sr">Explanation level</label><select id="tLevel" data-change="tutorLevel" style="width:auto">'+['beginner','intermediate','advanced'].map(l=>'<option'+((DB.tutorLevel||'intermediate')===l?' selected':'')+'>'+l+'</option>').join('')+'</select><button class="btn sm" data-a="clearChat">Clear chat</button></div></div>'+aiNote()+
+    '<div class="panel"><div class="chat" id="chat" aria-live="polite">';
+  if(!chat.length&&!TUT.busy)h+='<div class="msg a">Hi '+esc(u.name.split(' ')[0])+'. Ask me anything from your subjects, or try one of these:<div class="chips" style="margin-top:10px">'+chips.map(c=>'<button class="chip" data-a="chip" data-v="'+esc(c)+'">'+esc(c)+'</button>').join('')+'</div></div>';
+  chat.forEach(m=>{h+='<div class="msg '+(m.role==='user'?'u':'a')+'">'+(m.role==='user'?esc(m.content).replace(/\n/g,'<br>'):md(m.content))+'</div>'});
+  if(TUT.busy)h+='<div class="msg a"><div id="tOut"><span class="think">Thinking...</span></div></div>';
+  h+='</div>'+(TUT.err?'<p class="note bad" role="alert" style="margin-top:12px">'+esc(TUT.err)+'</p>':'')+
+    '<div class="row" style="margin-top:14px;align-items:flex-end"><div style="flex:1;min-width:220px"><label for="tIn" class="sr">Your question</label><textarea id="tIn" rows="2" style="min-height:0" placeholder="Type your doubt here"'+(TUT.busy?' disabled':'')+'></textarea></div>'+
+    (TUT.busy?'<button class="btn" data-a="tutorStop">Stop</button>':'<button class="btn pri" data-a="tutorSend">Send</button>')+'</div></div></div>';
+  return h;
+}
+
+/* ---------- student: notes ---------- */
+function viewNotes(u){
+  const p=prof(u.id),subj=NT.subject||p.subjects[0];
+  return '<div class="stack"><div class="head"><div><h1>Notes</h1><p>Paste notes or load a .txt file. Turn them into a summary, flashcards or a quiz.</p></div></div>'+aiNote()+
+    '<div class="panel"><div class="fields"><div class="field"><label for="nSubj">Subject</label><select id="nSubj" data-change="notesSubject">'+p.subjects.map(x=>'<option'+(x===subj?' selected':'')+'>'+esc(x)+'</option>').join('')+'</select></div>'+
+    '<div class="field"><label for="nFile">Load a text file</label><input id="nFile" type="file" accept=".txt,.md,text/plain" data-change="notesFile"></div></div>'+
+    '<div class="field"><label for="notesText">Your notes</label><textarea id="notesText" rows="10" placeholder="Paste a chapter, class notes or a topic summary">'+esc(DB.notes[u.id]||'')+'</textarea></div>'+
+    '<div class="row"><button class="btn pri" data-a="notesSum"'+(NT.busy?' disabled':'')+'>Summarize</button><button class="btn" data-a="notesCards"'+(NT.busy?' disabled':'')+'>Make flashcards</button><button class="btn" data-a="notesQuiz"'+(NT.busy?' disabled':'')+'>Quiz me on this</button>'+(NT.busy?'<button class="btn" data-a="notesStop">Stop</button>':'')+'</div>'+
+    (NT.err?'<p class="note bad" role="alert" style="margin-top:12px">'+esc(NT.err)+'</p>':'')+
+    '<div class="out" id="notesOut" aria-live="polite">'+(NT.busy&&!NT.out?'<span class="think">Thinking...</span>':md(NT.out))+'</div></div></div>';
+}
+
+/* ---------- student: quizzes ---------- */
+function viewQuiz(u){
+  const p=prof(u.id),s=stats(u.id);
+  if(QZ.stage==='loading')return '<div class="stack"><div class="head"><div><h1>Quizzes</h1></div></div><div class="panel"><p class="think">Writing '+esc(QZ.subject)+' questions at '+levelName(QZ.level).toLowerCase()+' level...</p><button class="btn" data-a="qzCancel">Cancel</button></div></div>';
+  if(QZ.stage==='run'){
+    const q=QZ.qs[QZ.i],ans=QZ.picked!==null;
+    let h='<div class="stack" style="max-width:720px"><div class="head"><div><h1>'+esc(QZ.subject)+'</h1><p>Question '+(QZ.i+1)+' of '+QZ.qs.length+' &middot; '+levelName(QZ.level)+'</p></div><button class="btn sm" data-a="qzCancel">Quit</button></div><div class="panel"><h3 style="margin-bottom:16px">'+esc(q.q)+'</h3>';
+    q.options.forEach((o,i)=>{const cls=ans?(i===q.answer?' right':(i===QZ.picked?' wrong':'')):'';h+='<button class="opt'+cls+'" data-a="qzPick" data-i="'+i+'"'+(ans?' disabled':'')+'>'+esc(o)+'</button>'});
+    if(ans){h+='<div class="note '+(QZ.picked===q.answer?'good':'bad')+'" role="status"><b>'+(QZ.picked===q.answer?'Correct.':'Not quite.')+'</b> '+esc(q.explain||'')+'</div><div style="margin-top:14px"><button class="btn pri" data-a="qzNext">'+(QZ.i+1<QZ.qs.length?'Next question':'See results')+'</button></div>'}
+    return h+'</div></div>';
+  }
+  if(QZ.stage==='result'){
+    const r=QZ.result,d=r.nl-r.ol;
+    let h='<div class="stack" style="max-width:720px"><div class="head"><div><h1>'+r.score+' out of '+r.total+'</h1><p>'+esc(QZ.subject)+'. '+(d>0?'Level up: next quiz will be '+levelName(r.nl).toLowerCase()+'.':d<0?'Next quiz will be easier ('+levelName(r.nl).toLowerCase()+') so you can build confidence.':'Staying at '+levelName(r.nl).toLowerCase()+' level.')+'</p></div></div><div class="panel"><h3>Review</h3><ul class="list">';
+    QZ.qs.forEach((q,i)=>{const ok=QZ.answers[i].ok;h+='<li><div class="t"><b>'+esc(q.q)+'</b><small>'+(ok?'Correct':'Answer: '+esc(q.options[q.answer]))+' &middot; '+esc(q.topic||QZ.subject)+'</small></div><span class="pill '+(ok?'ok':'dim')+'">'+(ok?'Right':'Missed')+'</span></li>'});
+    return h+'</ul><div class="row" style="margin-top:14px"><button class="btn pri" data-a="qzAgain">Another quiz</button><button class="btn" data-a="go" data-r="dash">Back to home</button></div></div></div>';
+  }
+  const pre=QZ.prefill||{},sel=pre.subject||p.subjects[0],lv=(p.levels||{})[sel];
+  const past=DB.quizzes.filter(q=>q.sid===u.id).slice(-5).reverse();
+  return '<div class="stack"><div class="head"><div><h1>Quizzes</h1><p>Five questions at a time. Difficulty moves up or down with your score.</p></div></div>'+aiNote()+
+    '<div class="grid2"><div class="panel"><h3>New quiz</h3><div class="field"><label for="qzSubject">Subject</label><select id="qzSubject" data-change="qzSubj">'+p.subjects.map(x=>'<option'+(x===sel?' selected':'')+'>'+esc(x)+'</option>').join('')+'</select></div>'+
+    '<div class="field"><label for="qzTopic">Topic (optional)</label><input id="qzTopic" value="'+esc(pre.topic||'')+'" placeholder="For example: Electrostatics"></div>'+
+    '<p class="muted">'+(lv?'Current level: '+levelName(lv)+'.':'No level yet. This quiz will set your starting level.')+'</p><button class="btn pri" data-a="qzStart">Start quiz</button>'+
+    (QZ.err?'<p class="note bad" role="alert" style="margin-top:12px">'+esc(QZ.err)+'</p>':'')+'</div>'+
+    '<div class="panel"><h3>Practice your weak topics</h3>'+(s.weak.length?'<div class="chips">'+s.weak.map(w=>'<button class="chip" data-a="quizFor" data-v="'+esc(w.subject)+'" data-tp="'+esc(w.topic)+'">'+esc(w.topic)+'</button>').join('')+'</div>':'<p class="muted">Weak topics show up here after you answer a few questions.</p>')+
+    '<h3 style="margin-top:20px">Recent results</h3>'+(past.length?'<ul class="list">'+past.map(q=>'<li><div class="t"><b>'+esc(q.subject)+'</b><small>'+fmtDate(q.date)+'</small></div><span class="pill">'+q.score+' / '+q.total+'</span></li>').join('')+'</ul>':'<p class="muted">No quizzes yet.</p>')+'</div></div></div>';
+}
+
+/* ---------- student: flashcards ---------- */
+function viewCards(u){
+  const C=DB.cards.filter(c=>c.sid===u.id),today=dstr(),due=C.filter(c=>c.due<=today),p=prof(u.id);
+  if(CR.queue&&CR.queue.length&&CR.i<CR.queue.length){
+    const c=C.find(x=>x.id===CR.queue[CR.i]);
+    if(c)return '<div class="stack" style="max-width:640px"><div class="head"><div><h1>Review</h1><p>Card '+(CR.i+1)+' of '+CR.queue.length+'</p></div><button class="btn sm" data-a="cardsStop">Stop</button></div>'+
+      '<div class="flash"><span class="side-tag">'+esc(c.subject)+' &middot; '+(CR.show?'Answer':'Question')+'</span><div class="big">'+esc(CR.show?c.back:c.front)+'</div></div>'+
+      '<div class="row" style="justify-content:center;margin-top:18px">'+(CR.show?'<button class="btn" data-a="cardAgain">Again</button><button class="btn pri" data-a="cardKnew">I knew it</button>':'<button class="btn pri" data-a="cardShow">Show answer</button>')+'</div></div>';
+  }
+  const done=CR.queue&&CR.queue.length;
+  const by={};C.forEach(c=>{by[c.subject]=(by[c.subject]||0)+1});
+  return '<div class="stack"><div class="head"><div><h1>Flashcards</h1><p>Cards you miss come back sooner. Cards you know come back later.</p></div></div>'+(done?'<div class="note good">Review finished. Nice work.</div>':'')+
+    '<div class="strip"><div><div class="num">'+due.length+'</div><small>Due today</small></div><div><div class="num">'+C.length+'</div><small>Total cards</small></div></div>'+
+    '<div class="row"><button class="btn pri" data-a="cardsStart"'+(due.length?'':' disabled')+'>Review '+due.length+' due card'+(due.length===1?'':'s')+'</button><button class="btn" data-a="go" data-r="notes">Make cards from notes</button></div>'+
+    '<div class="grid2"><div class="panel"><h3>Add a card</h3><form data-form="cardAdd"><div class="field"><label for="cSub">Subject</label><select id="cSub" name="subject">'+p.subjects.map(x=>'<option>'+esc(x)+'</option>').join('')+'</select></div><div class="field"><label for="cF">Front</label><input id="cF" name="front" required></div><div class="field"><label for="cB">Back</label><input id="cB" name="back" required></div><button class="btn">Add card</button></form></div>'+
+    '<div class="panel"><h3>Your decks</h3>'+(Object.keys(by).length?'<ul class="list">'+Object.entries(by).map(([k,v])=>'<li><b>'+esc(k)+'</b><span class="pill">'+v+' cards</span></li>').join('')+'</ul>':'<p class="muted">No cards yet.</p>')+'</div></div></div>';
+}
+
+/* ---------- student: planner ---------- */
+function viewPlan(u){
+  const p=prof(u.id),today=dstr(),tm=dstr(addDays(1));
+  const T=DB.tasks.filter(t=>t.sid===u.id).sort((a,b)=>a.date.localeCompare(b.date));
+  const grp=[['Overdue',T.filter(t=>t.date<today&&!t.done)],['Today',T.filter(t=>t.date===today)],['Tomorrow',T.filter(t=>t.date===tm)],['Later',T.filter(t=>t.date>tm)]];
+  const s=stats(u.id);
+  let h='<div class="stack"><div class="head"><div><h1>Study plan</h1><p>'+(s.planPct===null?'No tasks yet.':s.tasksDone+' of '+s.tasksTotal+' tasks done ('+s.planPct+'%).')+'</p></div><button class="btn hi" data-a="planAI"'+(PL.busy?' disabled':'')+'>'+(PL.busy?'Building your plan...':'Build my week with AI')+'</button></div>'+aiNote()+
+    (PL.err?'<p class="note bad" role="alert">'+esc(PL.err)+'</p>':'')+'<div class="grid2"><div class="stack">';
+  grp.forEach(([n,list])=>{if(!list.length)return;h+='<div class="panel"><h3>'+n+'</h3><ul class="list">'+list.map(t=>'<li class="'+(t.done?'done':'')+'"><label class="row" style="margin:0;font-weight:400;flex:1;flex-wrap:nowrap"><input class="check" type="checkbox" data-a="taskToggle" data-id="'+t.id+'"'+(t.done?' checked':'')+'><span class="t"><b>'+esc(t.title)+'</b><small>'+esc(t.subject)+' &middot; '+t.minutes+' min'+(n==='Later'||n==='Overdue'?' &middot; '+fmtDate(t.date):'')+'</small></span></label><button class="btn sm danger" data-a="taskDel" data-id="'+t.id+'" aria-label="Delete task">Delete</button></li>').join('')+'</ul></div>'});
+  if(!T.length)h+='<div class="panel"><p class="muted">Your plan is empty. Add a task, or let the AI build a week around your exam date and weak topics.</p></div>';
+  h+='</div><div class="panel" style="align-self:start"><h3>Add a task</h3><form data-form="taskAdd"><div class="field"><label for="tTitle">Task</label><input id="tTitle" name="title" required></div><div class="fields"><div class="field"><label for="tSubj">Subject</label><select id="tSubj" name="subject">'+p.subjects.map(x=>'<option>'+esc(x)+'</option>').join('')+'</select></div><div class="field"><label for="tMin">Minutes</label><input id="tMin" name="minutes" type="number" min="5" max="240" value="30"></div></div><div class="field"><label for="tDate">Date</label><input id="tDate" name="date" type="date" value="'+today+'"></div><button class="btn pri">Add task</button></form></div></div></div>';
+  return h;
+}
+
+/* ---------- student: focus ---------- */
+const fmtClock=ms=>{const s=Math.max(0,Math.ceil(ms/1000)),m=Math.floor(s/60);return String(m).padStart(2,'0')+':'+String(s%60).padStart(2,'0')};
+function viewFocus(u){
+  const a=DB.active&&DB.active.sid===u.id?DB.active:null,p=prof(u.id),s=stats(u.id);
+  const past=DB.focus.filter(f=>f.sid===u.id).slice(-5).reverse();
+  if(a){
+    const left=a.endsAt-Date.now(),pct=Math.min(100,(1-left/(a.minutes*6e4))*100);
+    return '<div class="stack" style="max-width:760px"><div class="head"><div><h1>Focus mode</h1><p>'+esc(a.subject)+'. Stay with it.</p></div><span id="extBadge" class="pill dim"></span></div>'+
+      '<div class="timer"><div class="digits" id="tDigits" role="timer">'+fmtClock(left)+'</div><div class="sweep"><i id="tBar" style="width:'+pct.toFixed(1)+'%"></i></div>'+
+      '<p class="muted" style="margin-top:14px">Tab switches: <b id="tTabs">'+a.tabs+'</b> &nbsp; Blocked attempts: <b id="tBlk">'+a.blocked+'</b></p></div>'+
+      (FC.exitOpen?'<div class="panel"><h3>End session early</h3><p>Type <b>end focus session</b> to confirm. Time studied so far is still saved.</p><div class="row"><input id="exitPhrase" style="flex:1;min-width:200px" aria-label="Confirmation phrase" autocomplete="off"><button class="btn danger" id="exitBtn" data-a="fExit" disabled>End session</button><button class="btn" data-a="fExitClose">Keep going</button></div></div>':'<div><button class="btn" data-a="fExitOpen">End early</button></div>')+'</div>';
+  }
+  return '<div class="stack"><div class="head"><div><h1>Focus mode</h1><p>Start a timer. Listed sites are blocked while it runs (needs the browser extension).</p></div><div class="row"><span id="extBadge" class="pill dim"></span><button class="btn sm" data-a="extCheck">Check again</button></div></div>'+
+    '<div class="grid2"><div class="panel"><h3>New session</h3><div class="chips" style="margin-bottom:14px">'+[[25,'25 min'],[45,'45 min'],[50,'50 min'],[90,'90 min']].map(([m,l])=>'<button class="chip" data-a="fPreset" data-m="'+m+'">'+l+'</button>').join('')+'</div>'+
+    '<div class="fields"><div class="field"><label for="fMin">Minutes</label><input id="fMin" type="number" min="5" max="180" value="25"></div><div class="field"><label for="fSubj">Studying</label><select id="fSubj">'+p.subjects.map(x=>'<option>'+esc(x)+'</option>').join('')+'</select></div></div>'+
+    '<button class="btn hi" data-a="fStart">Start focus session</button><p class="muted" style="margin-top:12px;font-size:.88rem">Take a 5 minute break after each 25 minute session. A tab switch during a session counts as a distraction.</p></div>'+
+    '<div class="panel"><h3>Blocked sites</h3><div class="chips" style="margin-bottom:14px">'+blocklist(u.id).map(d=>'<span class="pill">'+esc(d)+'<button data-a="blkDel" data-v="'+esc(d)+'" aria-label="Remove '+esc(d)+'">&times;</button></span>').join('')+'</div>'+
+    '<form data-form="blkAdd" class="row" style="flex-wrap:nowrap"><label for="blkIn" class="sr">Add a site</label><input id="blkIn" name="site" placeholder="example.com" required><button class="btn">Add</button></form></div></div>'+
+    '<div class="grid2"><div class="panel"><h3>Recent sessions</h3>'+(past.length?'<ul class="list">'+past.map(f=>'<li><div class="t"><b>'+esc(f.subject)+'</b><small>'+fmtDate(f.date)+' &middot; '+(f.completed?'Completed':'Ended early')+' &middot; '+((f.tabs||0)+(f.blocked||0))+' distractions</small></div><span class="pill">'+f.minutes+' min</span></li>').join('')+'</ul>':'<p class="muted">No sessions yet.</p>')+'</div>'+
+    '<div class="panel"><h3>Set up site blocking</h3><p>A web page cannot block other sites by itself, so StudyMate uses a small Chrome extension. Open <b>chrome://extensions</b>, switch on Developer mode, choose <b>Load unpacked</b> and select the StudyMate extension folder. Then reload this page and press <b>Check again</b>.</p>'+
+    '<details><summary><b>Extension not detected?</b></summary><ol><li>In chrome://extensions, make sure <b>StudyMate Focus Blocker</b> is switched on. If you changed its files, press its reload icon.</li><li>Reload this page. It must be reloaded after the extension is installed.</li><li>Use desktop Chrome, Edge or Brave. Phones and Firefox are not supported.</li><li>Opened the page from a downloaded file? On the extension\'s Details page, switch on <b>Allow access to file URLs</b>.</li></ol></details></div></div></div></div>';
+}
+
+/* ---------- student: profile ---------- */
+function viewProfile(u){
+  const links=DB.links.filter(l=>l.sid===u.id&&l.status!=='rejected');
+  return '<div class="stack"><div class="head"><div><h1>Profile</h1><p>'+esc(u.email)+'</p></div></div>'+
+    '<div class="panel"><h3>Share progress with a parent</h3><p>Give this code to your parent. They enter it in their account, and you approve the request here.</p><div class="row"><span class="pill hi" style="font-size:1.3rem;padding:6px 18px;letter-spacing:.08em">'+esc(u.code)+'</span><button class="btn sm" data-a="copyCode">Copy code</button></div>'+
+    '<h4 style="margin-top:20px">Linked parents</h4>'+(links.length?'<ul class="list">'+links.map(l=>{const par=DB.users.find(x=>x.id===l.pid);return'<li><div class="t"><b>'+esc(par?par.name:'Parent')+'</b><small>'+(l.status==='approved'?'Can view your progress':'Waiting for your approval')+'</small></div><div class="row">'+(l.status==='pending'?'<button class="btn sm pri" data-a="approve" data-id="'+l.id+'">Approve</button>':'')+'<button class="btn sm danger" data-a="revoke" data-id="'+l.id+'">'+(l.status==='pending'?'Decline':'Remove')+'</button></div></li>'}).join('')+'</ul>':'<p class="muted">No parents linked.</p>')+
+    '<p class="muted" style="font-size:.88rem">Parents see study time, streaks, quiz scores and task progress. They never see your tutor chats or notes.</p></div>'+
+    '<div class="panel"><h3>Study profile</h3>'+onboardForm(u,true)+'</div></div>';
+}
+
+/* ---------- parent ---------- */
+function myChildren(pid){return DB.links.filter(l=>l.pid===pid&&l.status==='approved').map(l=>DB.users.find(u=>u.id===l.sid)).filter(Boolean)}
+function viewProgress(u){
+  const kids=myChildren(u.id);
+  if(!kids.length)return '<div class="stack"><div class="head"><div><h1>Progress</h1></div></div><div class="panel"><h3>No children linked yet</h3><p>Ask your child for the code on their Profile page, then link them.</p><button class="btn pri" data-a="go" data-r="link">Link a child</button></div></div>';
+  if(!PS.child||!kids.some(k=>k.id===PS.child))PS.child=kids[0].id;
+  const k=kids.find(x=>x.id===PS.child),p=prof(k.id)||{subjects:[]},s=stats(k.id),goal=goalOf(k.id);
+  const sent=DB.messages.filter(m=>m.sid===k.id&&m.pid===u.id).slice(-3).reverse();
+  let h='<div class="stack"><div class="head"><div><h1>'+esc(k.name)+'</h1><p>'+esc(p.course||'')+(p.exam?' &middot; exam in '+Math.max(0,daysBetween(dstr(),p.exam))+' days':'')+'</p></div>'+
+    (kids.length>1?'<div class="chips">'+kids.map(x=>'<button class="chip'+(x.id===k.id?' pill hi':'')+'" data-a="pChild" data-id="'+x.id+'">'+esc(x.name)+'</button>').join('')+'</div>':'')+'</div>';
+  alertsFor(k.id).forEach(a=>{h+='<div class="note '+a.t+'">'+esc(a.m)+'</div>'});
+  h+='<div class="strip"><div><div class="num">'+s.weekMin+'</div><small>Focus minutes this week</small></div><div><div class="num">'+s.streak+'</div><small>Day streak</small></div><div><div class="num">'+(s.planPct===null?'-':s.planPct+'%')+'</div><small>Plan completed</small></div><div><div class="num">'+(s.quizAvg===null?'-':s.quizAvg+'%')+'</div><small>Quiz average</small></div><div><div class="num">'+(s.tabs7+s.blocked7)+'</div><small>Distractions this week</small></div></div>';
+  h+='<div class="grid2"><div class="panel"><h3>Focus minutes, last 7 days</h3>'+barChart(s.week,goal)+'</div><div class="panel"><h3>Subject strength</h3>'+subjectBars(s,p.subjects)+'<h4 style="margin-top:18px">Weak topics</h4>'+weakList(s)+'</div></div>';
+  h+='<div class="panel"><h3>Weekly summary</h3>'+aiNote()+(PS.summary?'<div class="out" style="margin-top:0">'+md(PS.summary)+'</div>':'<p class="muted">Get a short plain-language summary of this week.</p>')+(PS.err?'<p class="note bad" role="alert">'+esc(PS.err)+'</p>':'')+'<button class="btn hi" data-a="pSummary"'+(PS.busy?' disabled':'')+'>'+(PS.busy?'Writing...':'Write this week\'s summary')+'</button></div>';
+  h+='<div class="grid2"><div class="panel"><h3>Daily study goal</h3><form data-form="goal" class="row" style="flex-wrap:nowrap"><label for="gMin" class="sr">Minutes per day</label><input id="gMin" name="minutes" type="number" min="10" max="600" value="'+goal+'"><button class="btn pri">Save goal</button></form><p class="muted" style="margin-top:8px">Minutes of focus per day. Shown on '+esc(k.name.split(' ')[0])+'\'s home screen.</p></div>'+
+    '<div class="panel"><h3>Send encouragement</h3><div class="chips" style="margin-bottom:10px">'+['Proud of you','Great streak, keep going','Take a break, you earned it'].map(c=>'<button class="chip" data-a="pChip" data-v="'+esc(c)+'">'+esc(c)+'</button>').join('')+'</div><form data-form="msg"><div class="field"><label for="mTxt" class="sr">Message</label><input id="mTxt" name="text" maxlength="140" placeholder="Write a short message" required></div><button class="btn">Send</button></form>'+
+    (sent.length?'<ul class="list" style="margin-top:10px">'+sent.map(m=>'<li><div class="t"><b>'+esc(m.text)+'</b><small>'+fmtDate(m.date)+(m.read?' &middot; seen':'')+'</small></div></li>').join('')+'</ul>':'')+'</div></div>';
+  h+='<p class="muted" style="font-size:.88rem">Privacy: you see progress numbers only. '+esc(k.name.split(' ')[0])+'\'s tutor chats and notes stay private.</p></div>';
+  return h;
+}
+function viewLink(u){
+  const L=DB.links.filter(l=>l.pid===u.id);
+  return '<div class="stack" style="max-width:720px"><div class="head"><div><h1>Link a child</h1><p>Enter the code from your child\'s Profile page. They approve the request.</p></div></div>'+
+    '<form class="panel" data-form="link"><div class="field"><label for="lCode">Link code</label><input id="lCode" name="code" placeholder="SM-XXXXX" style="text-transform:uppercase" required></div>'+(LK.msg?'<p class="note" role="status">'+esc(LK.msg)+'</p>':'')+'<button class="btn pri">Send request</button></form>'+
+    '<div class="panel"><h3>Your requests</h3>'+(L.length?'<ul class="list">'+L.map(l=>{const c=DB.users.find(x=>x.id===l.sid);return'<li><div class="t"><b>'+esc(c?c.name:'Student')+'</b><small>'+(l.status==='approved'?'Approved':l.status==='pending'?'Waiting for approval':'Declined')+'</small></div>'+(l.status==='approved'?'<button class="btn sm" data-a="pOpen" data-id="'+l.sid+'">View progress</button>':'')+'</li>'}).join('')+'</ul>':'<p class="muted">No requests yet.</p>')+
+    '<p class="muted" style="font-size:.88rem;margin-top:10px">Demo tip: the demo student\'s code is <b>SM-RIYA7</b>.</p></div></div>';
+}
+
+/* ---------- render ---------- */
+function render(){
+  const u=me(),root=$('#root');
+  applyTheme();
+  if(!u){root.innerHTML=viewAuth();return}
+  let body;
+  if(u.role==='student'){
+    if(!prof(u.id)){root.innerHTML='<div class="main" style="margin:0 auto">'+viewOnboard(u,false)+'</div>';return}
+    if(!NAV_S.some(n=>n[0]===route))route='dash';
+    body=({dash:viewDash,tutor:viewTutor,notes:viewNotes,quiz:viewQuiz,cards:viewCards,plan:viewPlan,focus:viewFocus,profile:viewProfile})[route](u);
+  }else{
+    if(!NAV_P.some(n=>n[0]===route))route='progress';
+    body=(route==='link'?viewLink:viewProgress)(u);
+  }
+  root.innerHTML=shell(u,body);
+  updateExtBadge();
+  const c=$('#chat');if(c)c.scrollTop=c.scrollHeight;
+  if(route==='focus')extSend({type:'PING'});
+}
+function go(r){route=r;TUT.err=null;NT.err='';PL.err='';PS.err='';window.scrollTo(0,0);render()}
+const val=(f,n)=>f.elements[n]?f.elements[n].value:'';
+
+/* ---------- focus timer ---------- */
+let WL=null;
+async function wake(on){try{if(on){if(navigator.wakeLock&&!WL)WL=await navigator.wakeLock.request('screen')}else if(WL){await WL.release();WL=null}}catch(e){WL=null}}
+function startFocus(){
+  const u=me(),mins=Math.min(180,Math.max(5,Number($('#fMin').value)||25));
+  DB.active={sid:u.id,start:Date.now(),endsAt:Date.now()+mins*6e4,minutes:mins,subject:$('#fSubj').value,tabs:0,blocked:0};
+  save();FC.exitOpen=false;
+  extSend({type:'START',domains:blocklist(u.id),endsAt:DB.active.endsAt});
+  wake(true);render();
+}
+function finishFocus(completed){
+  const a=DB.active;if(!a)return;
+  const mins=completed?a.minutes:Math.floor((Date.now()-a.start)/6e4),id=uid();
+  if(mins>=1)DB.focus.push({id,sid:a.sid,date:dstr(new Date(a.start)),minutes:mins,completed,subject:a.subject,tabs:a.tabs,blocked:a.blocked});
+  DB.active=null;FC.exitOpen=false;save();
+  extSend({type:'STOP',sessionId:id});wake(false);document.title='StudyMate AI';
+  toast(completed?'Session complete. Take a 5 minute break.':'Session ended. '+mins+' minutes saved.');
+  if(route==='focus'||route==='dash')render();
+}
+function tick(){
+  const a=DB.active;if(!a)return;
+  const left=a.endsAt-Date.now();
+  if(left<=0){finishFocus(true);return}
+  const d=$('#tDigits');
+  if(d){d.textContent=fmtClock(left);const b=$('#tBar');if(b)b.style.width=Math.min(100,(1-left/(a.minutes*6e4))*100).toFixed(1)+'%';const t=$('#tTabs');if(t)t.textContent=a.tabs;const k=$('#tBlk');if(k)k.textContent=a.blocked}
+  document.title=fmtClock(left)+' Focus';
+}
+document.addEventListener('visibilitychange',()=>{const a=DB.active;if(a&&document.hidden){a.tabs++;save()}});
+
+/* ---------- AI flows ---------- */
+async function tutorSend(text){
+  const u=me(),p=prof(u.id),box=$('#tIn');
+  text=(text||(box&&box.value)||'').trim();
+  if(!text||TUT.busy)return;
+  if(!SAMPLE){TUT.err=AIERR.no_ai;return render()}
+  const chat=DB.chats[u.id]||(DB.chats[u.id]=[]);
+  chat.push({role:'user',content:text});TUT.busy=true;TUT.err=null;TUT.ctl=new AbortController();
+  render();
+  let hist=chat.slice(-12);const fu=hist.findIndex(m=>m.role==='user');hist=hist.slice(Math.max(0,fu));
+  const turns=[{role:'user',content:tutorRules(u,p)}].concat(hist.map(m=>({role:m.role,content:m.content})));
+  try{
+    const r=await SAMPLE(turns,{cache:false,modelTier:'quick',signal:TUT.ctl.signal,onText:({text})=>{const o=$('#tOut');if(o){o.innerHTML=md(text);const c=$('#chat');if(c)c.scrollTop=c.scrollHeight}}});
+    chat.push({role:'assistant',content:r.text});
+  }catch(e){
+    if(e.text)chat.push({role:'assistant',content:e.text+'\n\n(interrupted)'});
+    else if(e.code!=='cancelled')TUT.err=aiMsg(e);
+  }
+  if(chat.length>40)chat.splice(0,chat.length-40);
+  TUT.busy=false;save();if(route==='tutor')render();
+}
+async function notesRun(kind){
+  const u=me(),p=prof(u.id),text=($('#notesText').value||'').trim(),subject=$('#nSubj').value;
+  DB.notes[u.id]=text;NT.subject=subject;save();
+  if(text.length<40){NT.err='Add a bit more text first, at least a couple of sentences.';NT.out='';return render()}
+  if(!SAMPLE){NT.err=AIERR.no_ai;return render()}
+  const body=text.slice(0,30000);
+  NT.busy=true;NT.err='';NT.out='';NT.ctl=new AbortController();render();
+  try{
+    if(kind==='sum'){
+      const r=await SAMPLE('Summarize these '+subject+' study notes for a '+p.course+' student. Give a 3 sentence summary, then 5 to 7 key points as a bullet list, then 3 likely exam questions as a numbered list. Notes:\n\n'+body,{modelTier:'default',signal:NT.ctl.signal,onText:({text})=>{NT.out=text;const o=$('#notesOut');if(o)o.innerHTML=md(text)}});
+      NT.out=r.text;
+    }else{
+      const arr=await SAMPLE.json('Create 8 flashcards from these '+subject+' study notes. Reply with only a JSON array like [{"front":"question or term","back":"short answer"}]. Keep each back under 25 words.\n\nNotes:\n'+body,{modelTier:'default',signal:NT.ctl.signal});
+      const ok=(Array.isArray(arr)?arr:[]).filter(c=>c&&typeof c.front==='string'&&typeof c.back==='string');
+      if(!ok.length)throw{code:'invalid_json'};
+      ok.slice(0,12).forEach(c=>DB.cards.push({id:uid(),sid:u.id,front:c.front,back:c.back,subject,box:1,due:dstr()}));
+      save();NT.out='**Saved '+Math.min(ok.length,12)+' flashcards** to your '+subject+' deck. Open Flashcards to review them.';
+    }
+  }catch(e){if(e.code!=='cancelled')NT.err=aiMsg(e)}
+  NT.busy=false;if(route==='notes')render();
+}
+async function startQuiz(o){
+  const u=me(),p=prof(u.id);
+  QZ.subject=o.subject;QZ.topic=o.topic||'';QZ.source=o.source||null;QZ.level=(p.levels&&p.levels[o.subject])||2;QZ.stage='loading';QZ.err=null;QZ.prefill=null;
+  const ctl=QZ.ctl=new AbortController();route='quiz';render();
+  const lv=['','easy recall questions','standard exam-style questions','challenging application questions'][QZ.level];
+  const prompt='Write 5 multiple-choice questions for a '+p.course+' student on '+QZ.subject+(QZ.topic?', topic: '+QZ.topic:'')+(QZ.source?', based only on these notes:\n'+QZ.source.slice(0,12000)+'\n':'')+'. Difficulty: '+lv+'. Each question has exactly 4 options and one correct answer. Reply with only a JSON array like [{"q":"...","options":["...","...","...","..."],"answer":0,"topic":"short sub-topic name","explain":"one sentence"}] where answer is the index 0 to 3 of the correct option.';
+  try{
+    if(!SAMPLE)throw{code:'no_ai'};
+    const data=await SAMPLE.json(prompt,{modelTier:'default',signal:ctl.signal});
+    if(QZ.ctl!==ctl)return;
+    const qs=(Array.isArray(data)?data:[]).filter(q=>q&&typeof q.q==='string'&&Array.isArray(q.options)&&q.options.length===4&&Number.isInteger(q.answer)&&q.answer>=0&&q.answer<4).slice(0,5);
+    if(qs.length<3)throw{code:'invalid_json'};
+    QZ.qs=qs;QZ.i=0;QZ.picked=null;QZ.answers=[];QZ.stage='run';
+  }catch(e){if(QZ.ctl!==ctl)return;QZ.stage='setup';if(e.code!=='cancelled')QZ.err=aiMsg(e)}
+  if(route==='quiz')render();
+}
+function finishQuiz(){
+  const u=me(),p=prof(u.id),score=QZ.answers.filter(a=>a.ok).length,total=QZ.qs.length,ol=QZ.level;
+  let nl=ol;if(score/total>=.8)nl=Math.min(3,ol+1);else if(score/total<=.4)nl=Math.max(1,ol-1);
+  DB.quizzes.push({id:uid(),sid:u.id,date:dstr(),subject:QZ.subject,level:ol,score,total,items:QZ.answers.map(a=>({topic:a.topic,ok:a.ok}))});
+  p.levels=p.levels||{};p.levels[QZ.subject]=nl;
+  QZ.result={score,total,ol,nl};QZ.stage='result';QZ.source=null;save();render();
+}
+async function planAI(){
+  const u=me(),p=prof(u.id),s=stats(u.id);
+  if(!SAMPLE){PL.err=AIERR.no_ai;return render()}
+  PL.busy=true;PL.err='';render();
+  const days=p.exam?daysBetween(dstr(),p.exam):null;
+  const prompt='Create a 7 day study plan (day 0 is today, '+dstr()+'). Student: '+p.course+'. Subjects: '+p.subjects.join(', ')+'. Goal: '+(p.goal||'do well')+'. Exam in '+(days===null?'an unknown number of':days)+' days. Study time available: '+p.hours+' hours per day. Preferred style: '+p.style+'. Weak topics: '+(s.weak.map(w=>w.topic+' ('+w.subject+')').join(', ')||'none known yet')+'. Put weak topics first, mix subjects, add a short revision task on day 3 and day 6, and keep each day within the daily hours. Give 2 to 4 tasks per day. Reply with only a JSON array like [{"day":0,"subject":"Physics","title":"Electrostatics: Coulomb law practice","minutes":45}].';
+  try{
+    const arr=await SAMPLE.json(prompt,{modelTier:'default'});
+    const ok=(Array.isArray(arr)?arr:[]).filter(t=>t&&typeof t.title==='string'&&Number.isInteger(t.day)&&t.day>=0&&t.day<=6);
+    if(ok.length<3)throw{code:'invalid_json'};
+    DB.tasks=DB.tasks.filter(t=>!(t.sid===u.id&&t.ai&&!t.done&&t.date>=dstr()));
+    ok.forEach(t=>DB.tasks.push({id:uid(),sid:u.id,subject:String(t.subject||p.subjects[0]),title:t.title,minutes:Math.min(240,Math.max(10,Math.round(Number(t.minutes)||30))),date:dstr(addDays(t.day)),done:false,ai:true}));
+    save();toast('Added '+ok.length+' tasks to your plan.');
+  }catch(e){PL.err=aiMsg(e)}
+  PL.busy=false;if(route==='plan')render();
+}
+async function parentSummary(){
+  const k=DB.users.find(x=>x.id===PS.child),p=prof(k.id),s=stats(k.id);
+  if(!SAMPLE){PS.err=AIERR.no_ai;return render()}
+  PS.busy=true;PS.err='';render();
+  const data={name:k.name.split(' ')[0],course:p.course,focusMinutesThisWeek:s.weekMin,dailyGoalMinutes:goalOf(k.id),streakDays:s.streak,planCompletedPercent:s.planPct,quizAveragePercent:s.quizAvg,
+    subjectAccuracyPercent:Object.fromEntries(Object.entries(s.subj).map(([n,a])=>[n,Math.round(a.c/a.t*100)])),weakTopics:s.weak.map(w=>w.topic),distractionsThisWeek:s.tabs7+s.blocked7,daysToExam:p.exam?daysBetween(dstr(),p.exam):null};
+  try{
+    const r=await SAMPLE('You write a short, warm weekly progress note for a parent about their child\'s studying. Use only the data below and do not invent facts. Maximum 100 words, plain language. Include one strength, one thing to work on, and one thing the parent can do to help.\n\nData: '+JSON.stringify(data),{modelTier:'default'});
+    PS.summary=r.text;
+  }catch(e){PS.err=aiMsg(e)}
+  PS.busy=false;if(route==='progress')render();
+}
+
+/* ---------- click actions ---------- */
+const A={
+  go:b=>go(b.dataset.r||b.dataset.v),
+  mode:()=>{authMode=authMode==='login'?'signup':'login';authErr='';render()},
+  role:b=>{authRole=b.dataset.v;authErr='';render()},
+  theme:()=>{const dark=document.documentElement.getAttribute('data-theme')==='dark'||(!DB.theme&&matchMedia('(prefers-color-scheme: dark)').matches);DB.theme=dark?'light':'dark';save();render()},
+  logout:()=>{DB.me=null;authErr='';save();render()},
+  demoS:()=>{seedDemo();DB.me='demo-s';route='dash';save();render()},
+  demoP:()=>{seedDemo();DB.me='demo-p';route='progress';PS.child='demo-s';PS.summary='';save();render()},
+  approve:b=>{const l=DB.links.find(x=>x.id===b.dataset.id);if(l){l.status='approved';save();toast('Parent can now view your progress.');render()}},
+  reject:b=>{const l=DB.links.find(x=>x.id===b.dataset.id);if(l){l.status='rejected';save();render()}},
+  revoke:b=>{DB.links=DB.links.filter(x=>x.id!==b.dataset.id);save();render()},
+  readMsg:b=>{const m=DB.messages.find(x=>x.id===b.dataset.id);if(m){m.read=true;save();render()}},
+  copyCode:()=>{const c=me().code;try{navigator.clipboard.writeText(c).then(()=>toast('Code copied.'),()=>toast('Code: '+c))}catch(e){toast('Code: '+c)}},
+  quizFor:b=>{QZ.stage='setup';QZ.prefill={subject:b.dataset.v,topic:b.dataset.tp||''};go('quiz')},
+  chip:b=>tutorSend(b.dataset.v),
+  clearChat:()=>{DB.chats[me().id]=[];save();render()},
+  tutorSend:()=>tutorSend(),
+  tutorStop:()=>{TUT.ctl&&TUT.ctl.abort()},
+  notesSum:()=>notesRun('sum'),
+  notesCards:()=>notesRun('cards'),
+  notesStop:()=>{NT.ctl&&NT.ctl.abort()},
+  notesQuiz:()=>{
+    const u=me(),t=($('#notesText').value||'').trim();
+    if(t.length<40){NT.err='Add a bit more text first, at least a couple of sentences.';return render()}
+    DB.notes[u.id]=t;save();startQuiz({subject:$('#nSubj').value,source:t});
+  },
+  qzStart:()=>startQuiz({subject:$('#qzSubject').value,topic:($('#qzTopic').value||'').trim()}),
+  qzCancel:()=>{QZ.ctl&&QZ.ctl.abort();QZ.ctl=null;QZ.stage='setup';QZ.err=null;render()},
+  qzPick:b=>{if(QZ.picked!==null)return;const i=+b.dataset.i,q=QZ.qs[QZ.i];QZ.picked=i;QZ.answers.push({ok:i===q.answer,topic:q.topic||QZ.topic||QZ.subject});render()},
+  qzNext:()=>{if(QZ.i+1<QZ.qs.length){QZ.i++;QZ.picked=null;render()}else finishQuiz()},
+  qzAgain:()=>{QZ.stage='setup';QZ.prefill={subject:QZ.subject,topic:''};render()},
+  cardsStart:()=>{const t=dstr();CR.queue=DB.cards.filter(c=>c.sid===me().id&&c.due<=t).map(c=>c.id);CR.i=0;CR.show=false;render()},
+  cardsStop:()=>{CR.queue=null;render()},
+  cardShow:()=>{CR.show=true;render()},
+  cardKnew:()=>{const c=DB.cards.find(x=>x.id===CR.queue[CR.i]);if(c){c.box=Math.min(6,(c.box||1)+1);c.due=dstr(addDays([1,2,4,7,14,30][c.box-1]))}CR.i++;CR.show=false;save();render()},
+  cardAgain:()=>{const c=DB.cards.find(x=>x.id===CR.queue[CR.i]);if(c){c.box=1;c.due=dstr(addDays(1));if(CR.queue.length<40)CR.queue.push(c.id)}CR.i++;CR.show=false;save();render()},
+  taskToggle:b=>{const t=DB.tasks.find(x=>x.id===b.dataset.id);if(t){t.done=b.checked;save();render()}},
+  taskDel:b=>{DB.tasks=DB.tasks.filter(x=>x.id!==b.dataset.id);save();render()},
+  planAI:()=>planAI(),
+  fPreset:b=>{$('#fMin').value=b.dataset.m},
+  extCheck:()=>{EXT.ok=false;extSend({type:'PING'});setTimeout(()=>{updateExtBadge();toast(EXT.ok?'Extension connected.':'Extension still not detected. See the steps below.')},700)},
+  fStart:()=>startFocus(),
+  fExitOpen:()=>{FC.exitOpen=true;render()},
+  fExitClose:()=>{FC.exitOpen=false;render()},
+  fExit:()=>finishFocus(false),
+  blkDel:b=>{const u=me();DB.blocklist[u.id]=blocklist(u.id).filter(d=>d!==b.dataset.v);save();render()},
+  pChild:b=>{PS.child=b.dataset.id;PS.summary='';PS.err='';render()},
+  pOpen:b=>{PS.child=b.dataset.id;PS.summary='';go('progress')},
+  pSummary:()=>parentSummary(),
+  pChip:b=>{const i=$('#mTxt');if(i){i.value=b.dataset.v;i.focus()}}
+};
+
+/* ---------- form submits ---------- */
+const FM={
+  auth:async f=>{
+    const email=val(f,'email').trim().toLowerCase(),pass=val(f,'pass'),name=val(f,'name').trim();
+    authErr='';const h=await hash(pass);
+    if(authMode==='signup'){
+      if(DB.users.some(u=>u.email===email)){authErr='An account with this email already exists. Sign in instead.';return render()}
+      const u={id:uid(),name,email,hash:h,role:authRole};
+      if(authRole==='student')u.code=newCode();
+      DB.users.push(u);DB.me=u.id;
+    }else{
+      const u=DB.users.find(x=>x.email===email&&x.hash===h&&x.role===authRole);
+      if(!u){authErr='Email, password or role does not match. Check the role selected above.';return render()}
+      DB.me=u.id;
+    }
+    route=authRole==='student'?'dash':'progress';PS.child=null;save();render();
+  },
+  onboard:f=>{
+    const u=me(),old=prof(u.id)||{};
+    const subjects=val(f,'subjects').split(',').map(x=>x.trim()).filter(Boolean).slice(0,8);
+    DB.profiles[u.id]={course:val(f,'course').trim(),subjects,goal:val(f,'goal').trim(),exam:val(f,'exam'),hours:Number(val(f,'hours'))||2,style:val(f,'style'),levels:old.levels||{}};
+    save();toast('Profile saved.');render();
+  },
+  cardAdd:f=>{DB.cards.push({id:uid(),sid:me().id,front:val(f,'front').trim(),back:val(f,'back').trim(),subject:val(f,'subject'),box:1,due:dstr()});save();toast('Card added.');render()},
+  taskAdd:f=>{DB.tasks.push({id:uid(),sid:me().id,title:val(f,'title').trim(),subject:val(f,'subject'),minutes:Number(val(f,'minutes'))||30,date:val(f,'date')||dstr(),done:false});save();render()},
+  blkAdd:f=>{
+    const u=me();let d=val(f,'site').trim().toLowerCase().replace(/^https?:\/\//,'').replace(/^www\./,'').split('/')[0];
+    if(!/^[a-z0-9.-]+\.[a-z]{2,}$/.test(d)){toast('Enter a site like example.com');return}
+    const l=blocklist(u.id);if(!l.includes(d))l.push(d);save();render();
+  },
+  goal:f=>{DB.goals[PS.child]={minutes:Math.min(600,Math.max(10,Number(val(f,'minutes'))||60))};save();toast('Daily goal saved.');render()},
+  msg:f=>{const u=me(),t=val(f,'text').trim();if(!t)return;DB.messages.push({id:uid(),pid:u.id,sid:PS.child,text:t,date:dstr(),read:false});save();toast('Message sent.');render()},
+  link:f=>{
+    const u=me(),code=val(f,'code').trim().toUpperCase(),st=DB.users.find(x=>x.role==='student'&&x.code===code);
+    if(!st){LK.msg='No student found with that code. Check it and try again.';return render()}
+    const ex=DB.links.find(l=>l.pid===u.id&&l.sid===st.id);
+    if(ex&&ex.status!=='rejected'){LK.msg=ex.status==='approved'?'You are already linked to '+st.name+'.':'Request already sent. Waiting for approval.';return render()}
+    if(ex)ex.status='pending';else DB.links.push({id:uid(),pid:u.id,sid:st.id,status:'pending'});
+    LK.msg='Request sent to '+st.name+'. They need to approve it from their account.';save();render();
+  }
+};
+const CH={
+  tutorLevel:t=>{DB.tutorLevel=t.value;save()},
+  notesSubject:t=>{NT.subject=t.value},
+  notesFile:t=>{const f=t.files&&t.files[0];if(!f)return;if(f.size>500000){toast('That file is too large. Use a file under 500 KB.');return}const r=new FileReader();r.onload=()=>{const ta=$('#notesText');if(ta){ta.value=String(r.result);DB.notes[me().id]=ta.value;save()}};r.readAsText(f)},
+  qzSubj:t=>{QZ.prefill={subject:t.value,topic:($('#qzTopic')||{}).value||''};render()}
+};
+
+/* ---------- events ---------- */
+let nTimer;
+document.addEventListener('click',e=>{const b=e.target.closest('[data-a]');if(!b||b.type==='checkbox')return;const fn=A[b.dataset.a];if(fn)fn(b,e)});
+document.addEventListener('change',e=>{const t=e.target;if(t.dataset&&t.dataset.a==='taskToggle'){A.taskToggle(t);return}const c=t.dataset&&t.dataset.change;if(c&&CH[c])CH[c](t)});
+document.addEventListener('submit',e=>{const f=e.target.closest('form[data-form]');if(!f)return;e.preventDefault();const fn=FM[f.dataset.form];if(fn)fn(f)});
+document.addEventListener('input',e=>{
+  const t=e.target;
+  if(t.id==='notesText'){clearTimeout(nTimer);nTimer=setTimeout(()=>{const u=me();if(u){DB.notes[u.id]=t.value;save()}},400)}
+  if(t.id==='exitPhrase'){const b=$('#exitBtn');if(b)b.disabled=t.value.trim().toLowerCase()!=='end focus session'}
+});
+document.addEventListener('keydown',e=>{if(e.target.id==='tIn'&&e.key==='Enter'&&!e.shiftKey){e.preventDefault();tutorSend()}});
+
+/* ---------- start ---------- */
+applyTheme();
+if(DB.active&&DB.active.endsAt<Date.now())finishFocus(true);
+setInterval(tick,1000);
+render();
+extSend({type:'PING'});
+})();
+</script>
+</body>
+</html>
